@@ -2,7 +2,7 @@ package fr.tle.interfaces.rest
 
 import fr.tle.domain.Player
 import fr.tle.domain.PlayerService
-import fr.tle.infrastructure.persistence.memory.InMemoryPlayerRepository
+import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -10,13 +10,16 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import org.koin.ktor.ext.inject
 
-fun Route.playerRouting(playerService: PlayerService){
-    route("/players"){
-        get{
+fun Route.playerRouting() {
+    val playerService by inject<PlayerService>()
+
+    route("/players") {
+        get {
             call.respond(playerService.allSortedByRank())
         }
-        get("{pseudo}"){
+        get("{pseudo}") {
             val pseudo = call.parameters["pseudo"] //FIXME can it even happen?
                 ?: return@get call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
             val player = playerService.by(pseudo)
@@ -29,19 +32,26 @@ fun Route.playerRouting(playerService: PlayerService){
         }
         delete {
             playerService.deleteAll()
-            call.respondText("All players were successfully deleted", status = HttpStatusCode.NoContent) // FIXME or HttpStatusCode.Accepted?
+            call.respondText(
+                "All players were successfully deleted",
+                status = HttpStatusCode.NoContent
+            ) // FIXME or HttpStatusCode.Accepted?
         }
     }
 }
 
-fun Route.listAllPlayers(playerService: PlayerService){
-    get("/players"){
+fun Route.listAllPlayers() {
+    val playerService by inject<PlayerService>()
+
+    get("/players") {
         call.respond(playerService.allSortedByRank())
     }
 }
 
-fun Route.getPlayer(playerService: PlayerService){
-    get("/players/{pseudo}"){
+fun Route.getPlayer() {
+    val playerService by inject<PlayerService>()
+
+    get("/players/{pseudo}") {
         val pseudo = call.parameters["pseudo"]
             ?: return@get call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
         val player = playerService.by(pseudo)
@@ -50,15 +60,24 @@ fun Route.getPlayer(playerService: PlayerService){
     }
 }
 
-fun Route.addPlayer(playerService: PlayerService){
+fun Route.addPlayer() {
+    val playerService by inject<PlayerService>()
+
     post("/players") {
         val player = call.receive<Player>()
-        call.respond(HttpStatusCode.Created, playerService.add(player))
+        try {
+            val rankedPlayer = playerService.add(player)
+            call.respond(HttpStatusCode.Created, rankedPlayer)
+        } catch (e: PlayerAlreadyExistsException) {
+            call.respondText(e.localizedMessage, status = HttpStatusCode.Conflict)
+        }
     }
 }
 
-fun Route.updatePlayer(playerService: PlayerService){
-    put("/players/{pseudo}"){
+fun Route.updatePlayer() {
+    val playerService by inject<PlayerService>()
+
+    put("/players/{pseudo}") {
         val pseudo = call.parameters["pseudo"]
             ?: return@put call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
 
@@ -71,22 +90,25 @@ fun Route.updatePlayer(playerService: PlayerService){
     }
 }
 
-fun Route.deleteAllPlayers(playerService: PlayerService){
+fun Route.deleteAllPlayers() {
+    val playerService by inject<PlayerService>()
+
     delete("/players") {
         playerService.deleteAll()
-        call.respondText("All players were successfully deleted", status = HttpStatusCode.NoContent) // FIXME or HttpStatusCode.Accepted?
+        call.respondText(
+            "All players were successfully deleted",
+            status = HttpStatusCode.NoContent
+        ) // FIXME or HttpStatusCode.Accepted?
     }
 }
 
-fun Application.registerPlayerRoutes(){
-    val playerService = PlayerService(InMemoryPlayerRepository())
+fun Application.registerPlayerRoutes() {
     routing {
-//        playerRouting(playerService)
-        addPlayer(playerService)
-        updatePlayer(playerService)
-        listAllPlayers(playerService)
-        getPlayer(playerService)
-        deleteAllPlayers(playerService)
+        addPlayer()
+        updatePlayer()
+        listAllPlayers()
+        getPlayer()
+        deleteAllPlayers()
     }
 }
 

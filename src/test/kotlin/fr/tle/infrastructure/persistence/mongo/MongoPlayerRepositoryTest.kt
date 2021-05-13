@@ -1,24 +1,27 @@
-package fr.tle.infrastructure.persistence.memory
+package fr.tle.infrastructure.persistence.mongo
 
+import com.mongodb.client.MongoDatabase
 import fr.tle.domain.Player
 import fr.tle.domain.RankedPlayer
+import fr.tle.extensions.Database
 import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
 import org.assertj.core.api.WithAssertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
+import org.litote.kmongo.*
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
-class InMemoryPlayerRepositoryTest : WithAssertions {
+@Database
+class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
-    private val repository = InMemoryPlayerRepository()
+    private val collection = mongoDatabase.getCollection<Player>("players")
+    private val repository = MongoPlayerRepository(collection)
 
     @Test
     fun `should add a player`() {
         val expected = Player("bill", 1)
         repository.add(expected)
-        val found = repository.storage.first()
+        val found = collection.findOne(Player::pseudo eq "bill")
         assertThat(found).isEqualTo(expected)
     }
 
@@ -36,7 +39,7 @@ class InMemoryPlayerRepositoryTest : WithAssertions {
         val expected = basePlayer.copy(points = 100)
         val updatedRankedPlayer = repository.update(expected)
         with(updatedRankedPlayer!!){
-            assertThat(this.player).isEqualTo(expected)
+            assertThat(player).isEqualTo(expected)
             assertThat(rank).isEqualTo(1)
         }
     }
@@ -82,11 +85,12 @@ class InMemoryPlayerRepositoryTest : WithAssertions {
 
         repository.deleteAll()
 
-        assertThat(repository.storage).isEmpty()
+        val allPlayers = repository.allSortedByRank()
+        assertThat(allPlayers).isEmpty()
     }
 
     @AfterEach
-    internal fun tearDown() {
-        repository.storage.clear()
+    private fun clear(){
+        collection.deleteMany()
     }
 }

@@ -3,15 +3,13 @@ package fr.tle.infrastructure.persistence.memory
 import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.RankedPlayer
+import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
 
 class InMemoryPlayerRepository: PlayerRepository {
-    val storage = mutableListOf(
-        Player("foo", 10),
-        Player("bar", 5),
-        Player("baz", 1),
-    )
+    val storage = mutableListOf<Player>()
 
     override fun add(player: Player): RankedPlayer {
+        if(storage.any { it.pseudo == player.pseudo }) throw PlayerAlreadyExistsException()
         storage.add(player)
         return by(player.pseudo)!!
     }
