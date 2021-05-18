@@ -2,12 +2,12 @@ package fr.tle
 
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.PlayerService
 import fr.tle.infrastructure.configuration.configureRouting
 import fr.tle.infrastructure.configuration.configureSerialization
 import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
+import fr.tle.infrastructure.persistence.mongo.PlayerDocument
 import io.ktor.application.*
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -36,8 +36,8 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
 
 val appModule = module {
     single<MongoDatabase> { KMongo.createClient().getDatabase("player-ranking") }
-    single<MongoCollection<Player>> { // FIXME do better? (~config class)
-        get<MongoDatabase>().getCollection<Player>("players")
+    single<MongoCollection<PlayerDocument>> { // FIXME do better? (~config class)
+        get<MongoDatabase>().getCollection<PlayerDocument>("players")
     }
     single<PlayerRepository> { MongoPlayerRepository(get()) }
     single { PlayerService(get()) }

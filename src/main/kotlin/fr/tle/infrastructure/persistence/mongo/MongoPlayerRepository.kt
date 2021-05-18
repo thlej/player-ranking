@@ -5,20 +5,23 @@ import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.RankedPlayer
 import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
+import kotlinx.serialization.Serializable
 import org.litote.kmongo.*
 import org.litote.kmongo.MongoOperator.*
 
-class MongoPlayerRepository(private val collection: MongoCollection<Player>) : PlayerRepository {
-    override fun add(player: Player): RankedPlayer {
-        if (collection.findOne(Player::pseudo eq player.pseudo) !== null) throw PlayerAlreadyExistsException()
-        collection.insertOne(player)
-        return by(player.pseudo)!! // FIXME better than '!!' ?
-        // FIXME move this by() into PlayerService?
+class MongoPlayerRepository(private val collection: MongoCollection<PlayerDocument>) : PlayerRepository {
+    override fun add(player: Player) {
+        if (collection.findOne(Player::pseudo eq player.pseudo) !== null) throw PlayerAlreadyExistsException() // TODO use ?.let{throw}
+        collection.insertOne(player.toPlayerDocument())
     }
 
-    override fun update(player: Player): RankedPlayer? {
-        collection.updateOne(Player::pseudo eq player.pseudo, player)
-        return by(player.pseudo) // FIXME move this by() into PlayerService?
+    override fun update(player: Player) {
+        collection.updateOne(Player::pseudo eq player.pseudo, player.toPlayerDocument())
+        /*collection.findOneAndUpdate(
+            filter = "{pseudo: ${player.pseudo}}",
+            update = Json.encodeToString(player.toPlayerDocument())
+        ) ?: throw UnknownPlayerUpdateAttemptException("Unknown player '${player.pseudo}'")*/
+        // FIXME which one is better
     }
 
     override fun by(pseudo: String): RankedPlayer? {
@@ -26,7 +29,7 @@ class MongoPlayerRepository(private val collection: MongoCollection<Player>) : P
     }
 
     override fun allSortedByRank(): Collection<RankedPlayer> {
-        return collection.aggregate<RankedPlayer>(
+        return collection.aggregate<RankedPlayerDocument>(
             """
             [
                 {
@@ -58,10 +61,20 @@ class MongoPlayerRepository(private val collection: MongoCollection<Player>) : P
                 }
             ]
             """.formatJson()
-        ).toList()
+        ).toList().map { it.toRankedPlayer() }
     }
 
     override fun deleteAll() {
         collection.deleteMany()
     }
 }
+
+@Serializable
+data class PlayerDocument(val pseudo: String, val points: Int)
+
+@Serializable
+data class RankedPlayerDocument(val player: PlayerDocument, val rank: Int)
+
+fun Player.toPlayerDocument() = PlayerDocument(pseudo, points)
+fun PlayerDocument.toPlayer() = Player(pseudo, points)
+fun RankedPlayerDocument.toRankedPlayer() = RankedPlayer(Player(player.pseudo, player.points), rank)

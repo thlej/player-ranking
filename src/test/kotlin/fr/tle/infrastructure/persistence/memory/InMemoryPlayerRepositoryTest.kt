@@ -34,16 +34,15 @@ class InMemoryPlayerRepositoryTest : WithAssertions {
         val basePlayer = Player("bill", 1)
         repository.add(basePlayer)
         val expected = basePlayer.copy(points = 100)
-        val updatedRankedPlayer = repository.update(expected)
-        with(updatedRankedPlayer!!){
-            assertThat(this.player).isEqualTo(expected)
-            assertThat(rank).isEqualTo(1)
-        }
+        repository.update(expected)
+        val found = repository.storage.find { it.pseudo == "bill" }
+        assertThat(found).isEqualTo(expected)
     }
 
     @Test
     fun `should not update unknown player's points`() {
-        assertThat(repository.update(Player("foo", 666))).isNull()
+        repository.update(Player("foo", 666))
+        assertThat(repository.storage.find { it.pseudo == "foo" }).isNull()
     }
 
     @Test

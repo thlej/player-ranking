@@ -14,6 +14,7 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import java.lang.IllegalStateException
 
 fun Route.playerRouting() {
     val playerService by inject<PlayerService>()
@@ -74,6 +75,8 @@ fun Route.addPlayer() {
             call.respond(HttpStatusCode.Created, rankedPlayerResponse)
         } catch (e: PlayerAlreadyExistsException) {
             call.respondText(e.localizedMessage, status = HttpStatusCode.Conflict)
+        } catch (e: IllegalStateException){
+            call.respondText("Player creation failed, please retry later")
         }
     }
 }
