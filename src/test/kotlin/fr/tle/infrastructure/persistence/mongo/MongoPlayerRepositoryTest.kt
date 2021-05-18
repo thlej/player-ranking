@@ -17,7 +17,7 @@ import org.litote.kmongo.getCollection
 @Database
 class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
-    private val collection = mongoDatabase.getCollection<Player>("players")
+    private val collection = mongoDatabase.getCollection<PlayerDocument>("players")
     private val repository = MongoPlayerRepository(collection)
 
     @Test
@@ -25,7 +25,7 @@ class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
         val expected = Player("bill", 1)
         repository.add(expected)
         val found = collection.findOne(Player::pseudo eq "bill")
-        assertThat(found).isEqualTo(expected)
+        assertThat(found).isEqualTo(expected.toPlayerDocument())
     }
 
     @Test
@@ -40,18 +40,16 @@ class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
         val basePlayer = Player("bill", 1)
         repository.add(basePlayer)
         val expected = basePlayer.copy(points = 100)
-        val updatedRankedPlayer = repository.update(expected)
-        with(updatedRankedPlayer!!){
-            assertThat(player).isEqualTo(expected)
-            assertThat(rank).isEqualTo(1)
-            val found = collection.findOne(Player::pseudo eq "bill")
-            assertThat(found).isEqualTo(expected)
-        }
+
+        repository.update(expected)
+
+        val found = collection.findOne(Player::pseudo eq "bill")
+        assertThat(found).isEqualTo(expected.toPlayerDocument())
     }
 
     @Test
     fun `should not update unknown player's points`() {
-        assertThat(repository.update(Player("foo", 666))).isNull()
+        repository.update(Player("foo", 666))
         val found = collection.findOne(Player::pseudo eq "foo")
         assertThat(found).isNull()
     }

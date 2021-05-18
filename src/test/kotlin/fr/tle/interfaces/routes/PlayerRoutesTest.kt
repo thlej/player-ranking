@@ -5,10 +5,16 @@ import com.mongodb.client.MongoDatabase
 import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.PlayerService
-import fr.tle.domain.RankedPlayer
 import fr.tle.extensions.Database
 import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
+import fr.tle.infrastructure.persistence.mongo.PlayerDocument
+import fr.tle.infrastructure.persistence.mongo.toPlayerDocument
+import fr.tle.interfaces.rest.dto.PlayerCreateRequest
+import fr.tle.interfaces.rest.dto.PlayerResponse
 import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
+import fr.tle.interfaces.rest.dto.RankedPlayerResponse
+import fr.tle.interfaces.rest.mappers.toPlayer
+import fr.tle.interfaces.rest.mappers.toPlayerResponse
 import fr.tle.module
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -24,12 +30,12 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     private val baseUrl = "/v1/players"
 
-    private val playersCollection = mongoDatabase.getCollection<Player>("players") // FIXME do better (inject?)
+    private val playersCollection = mongoDatabase.getCollection<PlayerDocument>("players") // FIXME do better (inject?)
 
     private val testModule = module {
         single<MongoDatabase> { mongoDatabase }
-        single<MongoCollection<Player>> {
-            get<MongoDatabase>().getCollection<Player>("players")
+        single<MongoCollection<PlayerDocument>> {
+            get<MongoDatabase>().getCollection<PlayerDocument>("players")
         }
         single<PlayerRepository> { MongoPlayerRepository(get()) }
         single { PlayerService(get()) }
@@ -40,15 +46,17 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         withTestApplication({ // TODO BaseApplicationTest extract
             module(testing = true, listOf(testModule))
         }) {
-            val playerToAdd = Player("bob", 0)
+            val playerCreateRequest = PlayerCreateRequest("bob", 0)
 
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
-                setBody(Json.encodeToString(playerToAdd))
+                setBody(Json.encodeToString(playerCreateRequest))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.Created)
-                assertThat(response.content).isEqualTo(Json.encodeToString(RankedPlayer(playerToAdd, 1)))
+                val expected =
+                    Json.encodeToString(RankedPlayerResponse(playerCreateRequest.toPlayer().toPlayerResponse(), 1))
+                assertThat(response.content).isEqualTo(expected)
             }
         }
     }
@@ -59,12 +67,12 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            val playerToAdd = Player("bill", 0)
+            val playerCreateRequest = PlayerCreateRequest("bill", 0)
 
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
-                setBody(Json.encodeToString(playerToAdd))
+                setBody(Json.encodeToString(playerCreateRequest))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.Conflict)
                 assertThat(response.content).isEqualTo("Player already exists")
@@ -84,7 +92,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
                 setBody(Json.encodeToString(PlayerUpdateRequest(20)))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
-                assertThat(response.content).isEqualTo(Json.encodeToString(RankedPlayer(Player("bill", 20), 1)))
+                assertThat(response.content).isEqualTo(Json.encodeToString(RankedPlayerResponse(PlayerResponse("bill", 20), 1)))
             }
         }
     }
@@ -129,9 +137,9 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         }) {
             insertTestPlayers()
             val expectedPlayers = listOf(
-                RankedPlayer(Player("john", 10), 1),
-                RankedPlayer(Player("bob", 5), 2),
-                RankedPlayer(Player("bill", 1), 3)
+                RankedPlayerResponse(PlayerResponse("john", 10), 1),
+                RankedPlayerResponse(PlayerResponse("bob", 5), 2),
+                RankedPlayerResponse(PlayerResponse("bill", 1), 3)
             )
 
             handleRequest(HttpMethod.Get, baseUrl).apply {
@@ -147,11 +155,11 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            val expectedPlayer = RankedPlayer(Player("john", 10), 1)
+            val expected = RankedPlayerResponse(PlayerResponse("john", 10), 1)
 
             handleRequest(HttpMethod.Get, "$baseUrl/john").apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
-                assertThat(response.content).isEqualTo(Json.encodeToString(expectedPlayer))
+                assertThat(response.content).isEqualTo(Json.encodeToString(expected))
             }
         }
     }
@@ -197,12 +205,12 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         }
     }
 
-    private fun insertTestPlayers(){
+    private fun insertTestPlayers() {
         playersCollection.insertMany(
             listOf(
-                Player("bill",1),
-                Player("bob",5),
-                Player("john",10),
+                Player("bill", 1).toPlayerDocument(),
+                Player("bob", 5).toPlayerDocument(),
+                Player("john", 10).toPlayerDocument(),
             )
         )
     }

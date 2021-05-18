@@ -8,17 +8,14 @@ import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
 class InMemoryPlayerRepository: PlayerRepository {
     val storage = mutableListOf<Player>()
 
-    override fun add(player: Player): RankedPlayer {
+    override fun add(player: Player) {
         if(storage.any { it.pseudo == player.pseudo }) throw PlayerAlreadyExistsException()
         storage.add(player)
-        return by(player.pseudo)!!
     }
 
-    override fun update(player: Player): RankedPlayer? {
+    override fun update(player: Player) {
         val playerIdx = storage.indexOfFirst { it.pseudo == player.pseudo }
-        if(playerIdx == -1) return null
-        storage[playerIdx] = player
-        return by(player.pseudo)!!
+        if(playerIdx != -1) storage[playerIdx] = player
     }
 
     override fun by(pseudo: String): RankedPlayer? {
