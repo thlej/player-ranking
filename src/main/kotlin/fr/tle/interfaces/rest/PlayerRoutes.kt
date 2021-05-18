@@ -3,13 +3,16 @@ package fr.tle.interfaces.rest
 import fr.tle.domain.Player
 import fr.tle.domain.PlayerService
 import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
+import fr.tle.interfaces.rest.dto.PlayerCreateRequest
+import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
+import fr.tle.interfaces.rest.extensions.receiveBodyOrNull
+import fr.tle.interfaces.rest.mappers.toPlayer
+import fr.tle.interfaces.rest.mappers.toRankedPlayerResponse
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import org.koin.ktor.ext.inject
 
 fun Route.playerRouting() {
@@ -43,31 +46,32 @@ fun Route.playerRouting() {
 fun Route.listAllPlayers() {
     val playerService by inject<PlayerService>()
 
-    get("/players") {
-        call.respond(playerService.allSortedByRank())
+    get {
+        val allRankedPlayerResponse = playerService.allSortedByRank().map { it.toRankedPlayerResponse() }
+        call.respond(allRankedPlayerResponse)
     }
 }
 
 fun Route.getPlayer() {
     val playerService by inject<PlayerService>()
 
-    get("/players/{pseudo}") {
+    get("/{pseudo}") {
         val pseudo = call.parameters["pseudo"]
             ?: return@get call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
-        val player = playerService.by(pseudo)
+        val rankedPlayerResponse = playerService.by(pseudo)?.toRankedPlayerResponse()
             ?: return@get call.respondText("No player found for pseudo '$pseudo'", status = HttpStatusCode.NotFound)
-        call.respond(player)
+        call.respond(rankedPlayerResponse)
     }
 }
 
 fun Route.addPlayer() {
     val playerService by inject<PlayerService>()
 
-    post("/players") {
-        val player = call.receive<Player>()
+    post {
+        val request = call.receive<PlayerCreateRequest>()
         try {
-            val rankedPlayer = playerService.add(player)
-            call.respond(HttpStatusCode.Created, rankedPlayer)
+            val rankedPlayerResponse = playerService.add(request.toPlayer()).toRankedPlayerResponse()
+            call.respond(HttpStatusCode.Created, rankedPlayerResponse)
         } catch (e: PlayerAlreadyExistsException) {
             call.respondText(e.localizedMessage, status = HttpStatusCode.Conflict)
         }
@@ -77,23 +81,23 @@ fun Route.addPlayer() {
 fun Route.updatePlayer() {
     val playerService by inject<PlayerService>()
 
-    put("/players/{pseudo}") {
+    put("/{pseudo}") {
         val pseudo = call.parameters["pseudo"]
             ?: return@put call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
 
         val points = call.receiveBodyOrNull<PlayerUpdateRequest>()?.points
             ?: return@put call.respondText("Malformed or missing body", status = HttpStatusCode.BadRequest)
 
-        val player = playerService.update(Player(pseudo, points))
+        val rankedPlayerResponse = playerService.update(Player(pseudo, points))?.toRankedPlayerResponse()
             ?: return@put call.respondText("No player found for pseudo '$pseudo'", status = HttpStatusCode.NotFound)
-        call.respond(player)
+        call.respond(rankedPlayerResponse)
     }
 }
 
 fun Route.deleteAllPlayers() {
     val playerService by inject<PlayerService>()
 
-    delete("/players") {
+    delete {
         playerService.deleteAll()
         call.respondText(
             "All players were successfully deleted",
@@ -104,20 +108,12 @@ fun Route.deleteAllPlayers() {
 
 fun Application.registerPlayerRoutes() {
     routing {
-        addPlayer()
-        updatePlayer()
-        listAllPlayers()
-        getPlayer()
-        deleteAllPlayers()
+        route("/v1/players") {
+            addPlayer()
+            updatePlayer()
+            listAllPlayers()
+            getPlayer()
+            deleteAllPlayers()
+        }
     }
 }
-
-// FIXME move it elsewhere
-suspend inline fun <reified T : Any> ApplicationCall.receiveBodyOrNull(): T? = try {
-    receive()
-} catch (e: SerializationException) {
-    null
-}
-
-@Serializable
-data class PlayerUpdateRequest(val points: Int)
