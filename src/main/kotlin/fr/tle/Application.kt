@@ -5,9 +5,9 @@ import com.mongodb.client.MongoDatabase
 import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.PlayerService
-import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
 import fr.tle.infrastructure.configuration.configureRouting
 import fr.tle.infrastructure.configuration.configureSerialization
+import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
 import io.ktor.application.*
 import org.koin.core.module.Module
 import org.koin.dsl.module

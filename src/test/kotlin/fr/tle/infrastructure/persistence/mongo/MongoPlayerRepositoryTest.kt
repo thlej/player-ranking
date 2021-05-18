@@ -9,7 +9,10 @@ import org.assertj.core.api.WithAssertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.litote.kmongo.*
+import org.litote.kmongo.deleteMany
+import org.litote.kmongo.eq
+import org.litote.kmongo.findOne
+import org.litote.kmongo.getCollection
 
 @Database
 class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
