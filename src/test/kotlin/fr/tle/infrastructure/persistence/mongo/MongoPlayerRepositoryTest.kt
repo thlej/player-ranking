@@ -41,12 +41,16 @@ class MongoPlayerRepositoryTest(mongoDatabase: MongoDatabase) : WithAssertions {
         with(updatedRankedPlayer!!){
             assertThat(player).isEqualTo(expected)
             assertThat(rank).isEqualTo(1)
+            val found = collection.findOne(Player::pseudo eq "bill")
+            assertThat(found).isEqualTo(expected)
         }
     }
 
     @Test
     fun `should not update unknown player's points`() {
         assertThat(repository.update(Player("foo", 666))).isNull()
+        val found = collection.findOne(Player::pseudo eq "foo")
+        assertThat(found).isNull()
     }
 
     @Test
