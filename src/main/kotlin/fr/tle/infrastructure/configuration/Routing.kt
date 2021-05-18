@@ -1,4 +1,4 @@
-package fr.tle.plugins
+package fr.tle.infrastructure.configuration
 
 
 import fr.tle.interfaces.rest.registerPlayerRoutes
