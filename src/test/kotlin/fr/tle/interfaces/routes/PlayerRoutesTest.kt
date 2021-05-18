@@ -8,7 +8,7 @@ import fr.tle.domain.PlayerService
 import fr.tle.domain.RankedPlayer
 import fr.tle.extensions.Database
 import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
-import fr.tle.interfaces.rest.PlayerUpdateRequest
+import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
 import fr.tle.module
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -21,6 +21,8 @@ import org.litote.kmongo.getCollection
 
 @Database
 class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
+
+    private val baseUrl = "/v1/players"
 
     private val playersCollection = mongoDatabase.getCollection<Player>("players") // FIXME do better (inject?)
 
@@ -40,7 +42,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         }) {
             val playerToAdd = Player("bob", 0)
 
-            handleRequest(HttpMethod.Post, "/players") {
+            handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody(Json.encodeToString(playerToAdd))
@@ -59,7 +61,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             insertTestPlayers()
             val playerToAdd = Player("bill", 0)
 
-            handleRequest(HttpMethod.Post, "/players") {
+            handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody(Json.encodeToString(playerToAdd))
@@ -76,7 +78,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "/players/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody(Json.encodeToString(PlayerUpdateRequest(20)))
@@ -93,7 +95,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "/players/foo") {
+            handleRequest(HttpMethod.Put, "$baseUrl/foo") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody(Json.encodeToString(PlayerUpdateRequest(20)))
@@ -110,7 +112,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "/players/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
             }.apply {
@@ -132,7 +134,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
                 RankedPlayer(Player("bill", 1), 3)
             )
 
-            handleRequest(HttpMethod.Get, "/players").apply {
+            handleRequest(HttpMethod.Get, baseUrl).apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                 assertThat(response.content).isEqualTo(Json.encodeToString(expectedPlayers))
             }
@@ -147,7 +149,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             insertTestPlayers()
             val expectedPlayer = RankedPlayer(Player("john", 10), 1)
 
-            handleRequest(HttpMethod.Get, "/players/john").apply {
+            handleRequest(HttpMethod.Get, "$baseUrl/john").apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                 assertThat(response.content).isEqualTo(Json.encodeToString(expectedPlayer))
             }
@@ -160,7 +162,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            handleRequest(HttpMethod.Get, "/players/foo").apply {
+            handleRequest(HttpMethod.Get, "$baseUrl/foo").apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.NotFound)
                 assertThat(response.content).isEqualTo("No player found for pseudo 'foo'")
             }
@@ -188,7 +190,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            handleRequest(HttpMethod.Delete, "/players").apply {
+            handleRequest(HttpMethod.Delete, baseUrl).apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.NoContent)
                 assertThat(response.content).isEqualTo("All players were successfully deleted")
             }

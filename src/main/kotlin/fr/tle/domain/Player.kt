@@ -1,16 +1,12 @@
 package fr.tle.domain
 
-import kotlinx.serialization.Serializable
-
-@Serializable // TODO move it to a DTO
-data class Player(val pseudo: String, val points: Int){ // FIXME + id or unique pseudo?
+data class Player(val pseudo: String, val points: Int){
     init {
         require(pseudo.isNotBlank()){"Player.pseudo should not be empty"}
         require(points >= 0){"Player.points must be positive"}
     }
 }
 
-@Serializable // TODO move it to a DTO
 data class RankedPlayer(val player: Player, val rank: Int){
     init {
         require(rank >= 0){"RankedPlayer.rank must be positive"}
