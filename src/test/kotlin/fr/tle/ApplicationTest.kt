@@ -1,6 +1,6 @@
 package fr.tle
 
-import fr.tle.plugins.configureRouting
+import fr.tle.infrastructure.configuration.configureRouting
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import org.junit.jupiter.api.Test

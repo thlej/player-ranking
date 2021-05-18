@@ -6,13 +6,12 @@ import fr.tle.domain.Player
 import fr.tle.domain.PlayerRepository
 import fr.tle.domain.PlayerService
 import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
-import fr.tle.plugins.configureRouting
-import fr.tle.plugins.configureSerialization
+import fr.tle.infrastructure.configuration.configureRouting
+import fr.tle.infrastructure.configuration.configureSerialization
 import io.ktor.application.*
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.ktor.ext.Koin
-import org.koin.logger.slf4jLogger
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.getCollection
 
