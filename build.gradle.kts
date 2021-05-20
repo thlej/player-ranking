@@ -12,6 +12,7 @@ plugins {
     application
     kotlin("jvm") version "1.5.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.5.0"
+    jacoco // see https://youtrack.jetbrains.com/issue/KT-44757
 }
 
 group = "fr.tle"
@@ -45,9 +46,9 @@ tasks {
         useJUnitPlatform()
     }
 
-    /*withType<JacocoReport> {
+    withType<JacocoReport> {
         reports {
             xml.isEnabled = true
         }
-    }*/
+    }
 }
