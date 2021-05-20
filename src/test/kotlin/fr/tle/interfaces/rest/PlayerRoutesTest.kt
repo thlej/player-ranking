@@ -1,4 +1,4 @@
-package fr.tle.interfaces.routes
+package fr.tle.interfaces.rest
 
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
@@ -62,6 +62,86 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
+    fun `should not add player when body is empty`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            handleRequest(HttpMethod.Post, baseUrl) {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("{}")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("Malformed or missing body")
+            }
+        }
+    }
+
+    @Test
+    fun `should not add player with null pseudo`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            handleRequest(HttpMethod.Post, baseUrl) {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"pseudo": null, "points": 1}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("Malformed or missing body")
+            }
+        }
+    }
+
+    @Test
+    fun `should not add player with blank pseudo`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            handleRequest(HttpMethod.Post, baseUrl) {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"pseudo": "  ", "points": 1}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("PlayerCreateRequest.pseudo should not be empty or blank")
+            }
+        }
+    }
+
+    @Test
+    fun `should not add player with null points`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            handleRequest(HttpMethod.Post, baseUrl) {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"pseudo": "bill", "points": null}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("Malformed or missing body")
+            }
+        }
+    }
+
+    @Test
+    fun `should not add player with negative points`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            handleRequest(HttpMethod.Post, baseUrl) {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"pseudo": "bill", "points": -10}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("PlayerCreateRequest.points must be positive")
+            }
+        }
+    }
+
+    @Test
     fun `should not add player if pseudo already exists`() {
         withTestApplication({
             module(testing = true, listOf(testModule))
@@ -92,13 +172,73 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
                 setBody(Json.encodeToString(PlayerUpdateRequest(20)))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
-                assertThat(response.content).isEqualTo(Json.encodeToString(RankedPlayerResponse(PlayerResponse("bill", 20), 1)))
+                assertThat(response.content).isEqualTo(
+                    Json.encodeToString(
+                        RankedPlayerResponse(
+                            PlayerResponse(
+                                "bill",
+                                20
+                            ), 1
+                        )
+                    )
+                )
             }
         }
     }
 
     @Test
-    fun `should not update unknown player points`() {
+    fun `should not update player when body is empty`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            insertTestPlayers()
+            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("{}")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("Malformed or missing body")
+            }
+        }
+    }
+
+    @Test
+    fun `should not update player with null points`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            insertTestPlayers()
+            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"points": null}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("Malformed or missing body")
+            }
+        }
+    }
+
+    @Test
+    fun `should not update player with negative points`() {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {
+            insertTestPlayers()
+            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+                addHeader("Content-Type", "application/json")
+                addHeader("Accept", "application/json")
+                setBody("""{"points": -10}""")
+            }.apply {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                assertThat(response.content).isEqualTo("PlayerUpdateRequest.points must be positive")
+            }
+        }
+    }
+
+    @Test
+    fun `should not update unknown player`() {
         withTestApplication({
             module(testing = true, listOf(testModule))
         }) {
@@ -131,7 +271,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should list all players`() {
+    fun `should list all players sorted by rank`() {
         withTestApplication({
             module(testing = true, listOf(testModule))
         }) {
@@ -165,7 +305,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should not find an unknown player`() {
+    fun `should not get an unknown player`() {
         withTestApplication({
             module(testing = true, listOf(testModule))
         }) {
@@ -176,21 +316,6 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             }
         }
     }
-
-    /*@Test
-    fun `should respond BadRequest when pseudo is missing`() {
-        withTestApplication({
-            configureRouting()
-            configureSerialization()
-        }) {
-            val expectedPlayer = Player("foobarbaz", 10, 1)
-
-            handleRequest(HttpMethod.Get, "/players/null").apply {
-                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                assertThat(response.content).isEqualTo("Missing 'pseudo' parameter")
-            }
-        }
-    }*/
 
     @Test
     fun `should delete all players`() {

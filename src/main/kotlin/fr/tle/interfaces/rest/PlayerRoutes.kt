@@ -69,7 +69,8 @@ fun Route.addPlayer() {
     val playerService by inject<PlayerService>()
 
     post {
-        val request = call.receive<PlayerCreateRequest>()
+        val request = call.receiveBodyOrNull<PlayerCreateRequest>()
+            ?: return@post call.respondText("Malformed or missing body", status = HttpStatusCode.BadRequest)
         try {
             val rankedPlayerResponse = playerService.add(request.toPlayer()).toRankedPlayerResponse()
             call.respond(HttpStatusCode.Created, rankedPlayerResponse)
