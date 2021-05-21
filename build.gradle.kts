@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
@@ -12,14 +14,20 @@ plugins {
     application
     kotlin("jvm") version "1.5.0"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.5.0"
-    jacoco // see https://youtrack.jetbrains.com/issue/KT-44757
+    id("com.github.johnrengelman.shadow") version "6.1.0"
+    jacoco // broken, see https://youtrack.jetbrains.com/issue/KT-44757
 }
 
 group = "fr.tle"
 version = "0.0.1"
+
+val nettyEngineMain = "io.ktor.server.netty.EngineMain"
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set(nettyEngineMain)
 }
+// workaround for application.mainClassName deprecation
+// see https://github.com/johnrengelman/shadow/issues/609
+project.setProperty("mainClassName", nettyEngineMain)
 
 repositories {
     mavenCentral()
@@ -42,6 +50,12 @@ dependencies {
 }
 
 tasks {
+    withType<KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = "11"
+        }
+    }
+
     withType<Test> {
         useJUnitPlatform()
     }
@@ -49,6 +63,16 @@ tasks {
     withType<JacocoReport> {
         reports {
             xml.isEnabled = true
+        }
+    }
+    withType<Jar>(){
+        archiveFileName.set("player-ranking.jar")
+        manifest {
+            attributes(
+                mapOf(
+                    "Main-Class" to application.mainClass
+                )
+            )
         }
     }
 }

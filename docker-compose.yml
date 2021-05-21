@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  player-ranking:
+    build: .
+    links:
+      - mongo
+    environment:
+      - MONGODB_URI=mongodb://mongo
+    ports:
+      - 8080:8080
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017

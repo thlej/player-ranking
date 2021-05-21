@@ -29,13 +29,24 @@ fun main(args: Array<String>): Unit =
  * */
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
-fun Application.module(testing: Boolean = false, koinModules: List<Module> = listOf(appModule)) {
+fun Application.module(testing: Boolean = false, koinModules: List<Module> = emptyList()) {
     configureRouting()
     configureSerialization()
 
     install(Koin) {
-//        slf4jLogger() FIXME crash startup...
-        modules(koinModules)
+        // slf4jLogger() FIXME crashes startup...
+        modules(koinModules.ifEmpty {
+            listOf(module {
+                val mongoUri = environment.config.property("ktor.mongo.uri").getString()
+                log.info(">>> MONGODB_URI = $mongoUri")
+                single<MongoDatabase> { KMongo.createClient(mongoUri).getDatabase("player-ranking") }
+                single<MongoCollection<PlayerDocument>> {
+                    get<MongoDatabase>().getCollection<PlayerDocument>("players")
+                }
+                single<PlayerRepository> { MongoPlayerRepository(get()) }
+                single { PlayerService(get()) }
+            })
+        })
     }
 
     install(CallLogging) {
@@ -50,13 +61,4 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
             )
         }
     }
-}
-
-val appModule = module {
-    single<MongoDatabase> { KMongo.createClient().getDatabase("player-ranking") }
-    single<MongoCollection<PlayerDocument>> { // FIXME do better? (~config class)
-        get<MongoDatabase>().getCollection<PlayerDocument>("players")
-    }
-    single<PlayerRepository> { MongoPlayerRepository(get()) }
-    single { PlayerService(get()) }
 }
