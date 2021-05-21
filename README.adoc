@@ -1,0 +1,77 @@
+= player-ranking
+
+This application exposes a REST API for tournament players ranking management. +
+It is based on:
+
+* https://kotlinlang.org/[Kotlin]
+* https://ktor.io/[Ktor]
+* https://insert-koin.io/[Koin DI framework]
+* https://www.mongodb.com/[MongoDB]
+
+== Getting started
+
+You'll just need either Docker Compose or a valid JDK installation.
+
+=== Using Docker Compose
+The easiest way to build and run the application is using the provided bash file. +
+It uses https://docs.docker.com/compose/[Docker Compose] for easier builds and infrastructure management.
+
+MacOS and Windows users should install https://docs.docker.com/desktop/[Docker Desktop] which includes Compose along with other Docker tools.
+
+Linux users will have to install those two items separately :
+
+* https://docs.docker.com/engine/install/[Docker Engine]
+* https://docs.docker.com/compose/install/[Docker Compose]
+
+Once Docker is available, starting the application is quite simple using the provided bash script:
+....
+./run.sh up
+....
+
+Stopping the application (and docker infrastructure) is just as simple:
+....
+./run.sh down
+....
+
+=== Using JDK + gradle/gradlew
+If you don't want to rely on Docker, you'll have to build and run the application using the embedded `gradlew`.
+
+Build with:
+....
+gradlew clean build
+....
+
+Start the application with:
+....
+gradlew run
+....
+
+== API documentation
+include::src/test/resources/endpoint-tests.http[]
+
+== Stuff
+// Start mongo
+docker run --name mongo -d -p 27017:27017 mongo
+
+// Strange error
+java.net.SocketException: Connection reset
+at java.base/sun.nio.ch.SocketChannelImpl.throwConnectionReset(SocketChannelImpl.java:367)
+at java.base/sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:398)
+at io.netty.buffer.PooledByteBuf.setBytes(PooledByteBuf.java:253)
+at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1132)
+at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:350)
+at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:151)
+at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:719)
+at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:655)
+at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:581)
+at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:493)
+at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:989)
+at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+at io.ktor.server.netty.EventLoopGroupProxy$Companion$create$factory$1$1.run(NettyApplicationEngine.kt:241)
+at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+at java.base/java.lang.Thread.run(Thread.java:832)
+
+=> https://youtrack.jetbrains.com/issue/KTOR-646
+
+// Fatjar packing
+https://ktor.kotlincn.net/servers/deploy/packing/fatjar.html
