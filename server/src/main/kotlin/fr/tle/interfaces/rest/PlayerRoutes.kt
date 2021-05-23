@@ -10,39 +10,9 @@ import fr.tle.interfaces.rest.mappers.toPlayer
 import fr.tle.interfaces.rest.mappers.toRankedPlayerResponse
 import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import java.lang.IllegalStateException
-
-fun Route.playerRouting() {
-    val playerService by inject<PlayerService>()
-
-    route("/players") {
-        get {
-            call.respond(playerService.allSortedByRank())
-        }
-        get("{pseudo}") {
-            val pseudo = call.parameters["pseudo"] //FIXME can it even happen?
-                ?: return@get call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
-            val player = playerService.by(pseudo)
-                ?: return@get call.respondText("No player found for pseudo '$pseudo'", status = HttpStatusCode.NotFound)
-            call.respond(player)
-        }
-        post {
-            val player = call.receive<Player>()
-            call.respond(HttpStatusCode.Created, playerService.add(player))
-        }
-        delete {
-            playerService.deleteAll()
-            call.respondText(
-                "All players were successfully deleted",
-                status = HttpStatusCode.NoContent
-            ) // FIXME or HttpStatusCode.Accepted?
-        }
-    }
-}
 
 fun Route.listAllPlayers() {
     val playerService by inject<PlayerService>()
@@ -57,8 +27,7 @@ fun Route.getPlayer() {
     val playerService by inject<PlayerService>()
 
     get("/{pseudo}") {
-        val pseudo = call.parameters["pseudo"]
-            ?: return@get call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
+        val pseudo = call.parameters["pseudo"]!!
         val rankedPlayerResponse = playerService.by(pseudo)?.toRankedPlayerResponse()
             ?: return@get call.respondText("No player found for pseudo '$pseudo'", status = HttpStatusCode.NotFound)
         call.respond(rankedPlayerResponse)
@@ -106,7 +75,7 @@ fun Route.deleteAllPlayers() {
         call.respondText(
             "All players were successfully deleted",
             status = HttpStatusCode.NoContent
-        ) // FIXME or HttpStatusCode.Accepted?
+        )
     }
 }
 
