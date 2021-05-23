@@ -8,4 +8,4 @@ import fr.tle.interfaces.rest.dto.RankedPlayerResponse
 
 fun PlayerCreateRequest.toPlayer() = Player(pseudo, points)
 fun Player.toPlayerResponse() = PlayerResponse(pseudo, points)
-fun RankedPlayer.toRankedPlayerResponse() = RankedPlayerResponse(player.toPlayerResponse(), rank)
+fun RankedPlayer.toRankedPlayerResponse() = RankedPlayerResponse(player.pseudo, player.points, rank)

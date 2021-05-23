@@ -55,7 +55,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.Created)
                 val expected =
-                    Json.encodeToString(RankedPlayerResponse(playerCreateRequest.toPlayer().toPlayerResponse(), 1))
+                    Json.encodeToString(RankedPlayerResponse("bob", 0, 1))
                 assertThat(response.content).isEqualTo(expected)
             }
         }
@@ -174,12 +174,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                 assertThat(response.content).isEqualTo(
                     Json.encodeToString(
-                        RankedPlayerResponse(
-                            PlayerResponse(
-                                "bill",
-                                20
-                            ), 1
-                        )
+                        RankedPlayerResponse("bill", 20, 1)
                     )
                 )
             }
@@ -277,9 +272,9 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         }) {
             insertTestPlayers()
             val expectedPlayers = listOf(
-                RankedPlayerResponse(PlayerResponse("john", 10), 1),
-                RankedPlayerResponse(PlayerResponse("bob", 5), 2),
-                RankedPlayerResponse(PlayerResponse("bill", 1), 3)
+                RankedPlayerResponse("john", 10, 1),
+                RankedPlayerResponse("bob", 5, 2),
+                RankedPlayerResponse("bill", 1, 3)
             )
 
             handleRequest(HttpMethod.Get, baseUrl).apply {
@@ -295,7 +290,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
             module(testing = true, listOf(testModule))
         }) {
             insertTestPlayers()
-            val expected = RankedPlayerResponse(PlayerResponse("john", 10), 1)
+            val expected = RankedPlayerResponse("john", 10, 1)
 
             handleRequest(HttpMethod.Get, "$baseUrl/john").apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
