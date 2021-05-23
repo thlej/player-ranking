@@ -33,6 +33,17 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = emp
     configureRouting()
     configureSerialization()
 
+    install(CORS){
+        method(HttpMethod.Get)
+        method(HttpMethod.Post)
+        method(HttpMethod.Delete)
+        header(HttpHeaders.Accept)
+        header(HttpHeaders.ContentType)
+        header(HttpHeaders.AccessControlAllowHeaders)
+        header(HttpHeaders.AccessControlAllowOrigin)
+        anyHost()
+    }
+
     install(Koin) {
         // slf4jLogger() FIXME crashes startup...
         modules(koinModules.ifEmpty {

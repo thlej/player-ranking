@@ -14,7 +14,7 @@ data class PlayerCreateRequest(val pseudo: String, val points: Int){
 data class PlayerResponse(val pseudo: String, val points: Int)
 
 @Serializable
-data class RankedPlayerResponse(val player: PlayerResponse, val rank: Int)
+data class RankedPlayerResponse(val pseudo: String, val points: Int, val rank: Int)
 
 @Serializable
 data class PlayerUpdateRequest(val points: Int){
