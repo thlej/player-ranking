@@ -11,21 +11,16 @@ import org.litote.kmongo.MongoOperator.*
 
 class MongoPlayerRepository(private val collection: MongoCollection<PlayerDocument>) : PlayerRepository {
     override fun add(player: Player) {
-        if (collection.findOne(Player::pseudo eq player.pseudo) !== null) throw PlayerAlreadyExistsException() // TODO use ?.let{throw}
+        collection.findOne(Player::pseudo eq player.pseudo)?.let { throw PlayerAlreadyExistsException() }
         collection.insertOne(player.toPlayerDocument())
     }
 
     override fun update(player: Player) {
         collection.updateOne(Player::pseudo eq player.pseudo, player.toPlayerDocument())
-        /*collection.findOneAndUpdate(
-            filter = "{pseudo: ${player.pseudo}}",
-            update = Json.encodeToString(player.toPlayerDocument())
-        ) ?: throw UnknownPlayerUpdateAttemptException("Unknown player '${player.pseudo}'")*/
-        // FIXME which one is better
     }
 
     override fun by(pseudo: String): RankedPlayer? {
-        return allSortedByRank().find { it.player.pseudo == pseudo } // TODO match on db side?
+        return allSortedByRank().find { it.player.pseudo == pseudo }
     }
 
     override fun allSortedByRank(): Collection<RankedPlayer> {
@@ -76,5 +71,4 @@ data class PlayerDocument(val pseudo: String, val points: Int)
 data class RankedPlayerDocument(val player: PlayerDocument, val rank: Int)
 
 fun Player.toPlayerDocument() = PlayerDocument(pseudo, points)
-fun PlayerDocument.toPlayer() = Player(pseudo, points)
 fun RankedPlayerDocument.toRankedPlayer() = RankedPlayer(Player(player.pseudo, player.points), rank)
