@@ -112,7 +112,7 @@ fun Route.deleteAllPlayers() {
 
 fun Application.registerPlayerRoutes() {
     routing {
-        route("/v1/players") {
+        route("api/v1/players") {
             addPlayer()
             updatePlayer()
             listAllPlayers()

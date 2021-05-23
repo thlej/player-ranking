@@ -10,11 +10,8 @@ import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
 import fr.tle.infrastructure.persistence.mongo.PlayerDocument
 import fr.tle.infrastructure.persistence.mongo.toPlayerDocument
 import fr.tle.interfaces.rest.dto.PlayerCreateRequest
-import fr.tle.interfaces.rest.dto.PlayerResponse
 import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
 import fr.tle.interfaces.rest.dto.RankedPlayerResponse
-import fr.tle.interfaces.rest.mappers.toPlayer
-import fr.tle.interfaces.rest.mappers.toPlayerResponse
 import fr.tle.module
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -28,7 +25,7 @@ import org.litote.kmongo.getCollection
 @Database
 class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
-    private val baseUrl = "/v1/players"
+    private val baseUrl = "/api/v1/players"
 
     private val playersCollection = mongoDatabase.getCollection<PlayerDocument>("players") // FIXME do better (inject?)
 
