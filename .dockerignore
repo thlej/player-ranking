@@ -1,0 +1,17 @@
+.idea
+.git
+.gitignore
+*.iml
+*.log
+/out
+
+server/.gradle
+server/build
+
+client/dist
+client/node_modules
+client/.editorconfig
+
+docker-compose.yml
+README.adoc
+run.sh

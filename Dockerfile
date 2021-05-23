@@ -1,17 +1,27 @@
 ARG GRADLE_VERSION=7.0.2
+ARG NODE_VERSION=14
 ARG JAVA_VERSION=11
 
-#build
-FROM gradle:${GRADLE_VERSION}-jdk11 as build
-COPY src src
-COPY build.gradle.kts ./
-COPY settings.gradle.kts ./
-COPY gradle.properties ./
-RUN gradle clean shadowJar
+#build client
+FROM node:${NODE_VERSION}-alpine as build_client
+WORKDIR /usr/app
+COPY client/package.json .
+COPY client/package-lock.json .
+COPY client .
+RUN npm install
+RUN npm install -g @angular/cli
+RUN ng build --configuration="production"
 
-#ENTRYPOINT GRADLE_USER_HOME=cache gradle test jacocoTestReport --info --no-daemon
+#build server
+FROM gradle:${GRADLE_VERSION}-jdk11 as build_server
+COPY server/src src
+COPY server/build.gradle.kts ./
+COPY server/settings.gradle.kts ./
+COPY server/gradle.properties ./
+COPY --from=build_client /usr/app/dist/client src/main/resources/static
+RUN gradle clean shadowJar
 
 #release
 FROM openjdk:${JAVA_VERSION}-jre-slim
-COPY --from=build /home/gradle/build/libs/*.jar player-ranking.jar
-ENTRYPOINT java -Xmx128m -XshowSettings:vm -jar /player-ranking.jar
+COPY --from=build_server /home/gradle/build/libs/*.jar player-ranking.jar
+ENTRYPOINT java -jar /player-ranking.jar
