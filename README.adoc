@@ -1,24 +1,31 @@
 = player-ranking
 
-This application exposes a REST API for tournament players ranking management. +
-It is based on:
+A Kotlin/Ktor project containing:
+
+* a REST API for tournament players ranking management
+* an Angular webapp for those players visualization
+
+It is implemented using:
 
 * https://kotlinlang.org/[Kotlin]
 * https://ktor.io/[Ktor]
 * https://insert-koin.io/[Koin DI framework]
 * https://www.mongodb.com/[MongoDB]
+* https://angular.io/[Angular]
 
 == Getting started
 
-You'll just need either Docker Compose or a valid JDK installation.
+The easiest and fastest way to run the application is <<_using_docker_compose, using Docker Compose>>. +
+Otherwise, if you don't want to rely on Docker, you'll have to <<_building_manually, build>> its parts manually.
 
+[#_using_docker_compose]
 === Using Docker Compose
-The easiest way to build and run the application is using the provided bash file. +
-It uses https://docs.docker.com/compose/[Docker Compose] for easier builds and infrastructure management.
+The provided `run.sh` bash file uses https://docs.docker.com/compose/[Docker Compose] for building both the server and the client webapp. +
+It even sets up the database for you!
 
 MacOS and Windows users should install https://docs.docker.com/desktop/[Docker Desktop] which includes Compose along with other Docker tools.
 
-Linux users will have to install those two items separately :
+Linux's users will have to install those two items separately :
 
 * https://docs.docker.com/engine/install/[Docker Engine]
 * https://docs.docker.com/compose/install/[Docker Compose]
@@ -28,32 +35,71 @@ Once Docker is available, starting the application is quite simple using the pro
 ./run.sh up
 ....
 
+The webapp should be available at http://localhost:8080
+
 Stopping the application (and docker infrastructure) is just as simple:
 ....
 ./run.sh down
 ....
 
-=== Using JDK + gradle/gradlew
-If you don't want to rely on Docker, you'll have to build and run the application using the embedded `gradlew`.
+[#_building_manually]
+=== Building manually
 
-Build with:
+==== Build the server
+As a prerequisite, you'll need a valid https://openjdk.java.net/[JDK] installation on your machine.
+
+You'll also need a running https://www.mongodb.com/[MongoDB] instance, preferably on _localhost:27017_. +
+Change the server configuration accordingly otherwise (see `src/main/resources/application.conf`) or define a _MONGODB_URI_ environment variable.
+
+Navigate to the location where you cloned the project:
+....
+cd <path>/<to>/<player-ranking>/server
+....
+
+Using gradlew, build the server:
 ....
 gradlew clean build
 ....
 
-Start the application with:
+Start it with:
 ....
 gradlew run
 ....
 
+==== Building the client (using AngularCli)
+As a prerequisite, you'll need a valid https://nodejs.org/en/about/releases/[Node.js] installation on your machine.
+
+Once Node.js and NPM are available, install AngularCli:
+....
+npm install -g @angular/cli
+....
+
+Navigate to the location where you cloned the project:
+....
+cd <path>/<to>/<player-ranking>/client
+....
+
+Locally serve the project (useful in development phase) using:
+....
+ng serve
+....
+
+You can also build it for a production release using:
+....
+ng build --configuration="production"
+....
+
+
 == API documentation
-include::src/test/resources/endpoint-tests.http[]
+[source, http request]
+----
+include::server/src/test/resources/endpoint-tests.http[]
+----
 
-== Stuff
-// Start mongo
-docker run --name mongo -d -p 27017:27017 mongo
+== Misc
+A strange error appears randomly in the console (the app doesn't crash):
 
-// Strange error
+....
 java.net.SocketException: Connection reset
 at java.base/sun.nio.ch.SocketChannelImpl.throwConnectionReset(SocketChannelImpl.java:367)
 at java.base/sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:398)
@@ -70,8 +116,6 @@ at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
 at io.ktor.server.netty.EventLoopGroupProxy$Companion$create$factory$1$1.run(NettyApplicationEngine.kt:241)
 at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 at java.base/java.lang.Thread.run(Thread.java:832)
+....
 
-=> https://youtrack.jetbrains.com/issue/KTOR-646
-
-// Fatjar packing
-https://ktor.kotlincn.net/servers/deploy/packing/fatjar.html
+Looks like it is  a known issue: https://youtrack.jetbrains.com/issue/KTOR-646.

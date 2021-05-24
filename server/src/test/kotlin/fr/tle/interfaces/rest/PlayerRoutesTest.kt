@@ -27,7 +27,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     private val baseUrl = "/api/v1/players"
 
-    private val playersCollection = mongoDatabase.getCollection<PlayerDocument>("players") // FIXME do better (inject?)
+    private val playersCollection = mongoDatabase.getCollection<PlayerDocument>("players")
 
     private val testModule = module {
         single<MongoDatabase> { mongoDatabase }
@@ -38,11 +38,15 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
         single { PlayerService(get()) }
     }
 
+    private fun <R> withInitializedTestApplication(test: TestApplicationEngine.() -> R) {
+        withTestApplication({
+            module(testing = true, listOf(testModule))
+        }) {test}
+    }
+
     @Test
     fun `should add a new player`() {
-        withTestApplication({ // TODO BaseApplicationTest extract
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             val playerCreateRequest = PlayerCreateRequest("bob", 0)
 
             handleRequest(HttpMethod.Post, baseUrl) {
@@ -60,9 +64,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player when body is empty`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
@@ -76,9 +78,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player with null pseudo`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
@@ -92,9 +92,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player with blank pseudo`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
@@ -108,9 +106,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player with null points`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
@@ -124,9 +120,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player with negative points`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             handleRequest(HttpMethod.Post, baseUrl) {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
@@ -140,9 +134,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not add player if pseudo already exists`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             val playerCreateRequest = PlayerCreateRequest("bill", 0)
 
@@ -159,9 +151,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should update given player points`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
@@ -180,9 +170,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not update player when body is empty`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
@@ -197,9 +185,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not update player with null points`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
@@ -214,9 +200,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not update player with negative points`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
@@ -231,9 +215,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not update unknown player`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/foo") {
                 addHeader("Content-Type", "application/json")
@@ -248,9 +230,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not update when body is missing`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Put, "$baseUrl/bill") {
                 addHeader("Content-Type", "application/json")
@@ -264,9 +244,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should list all players sorted by rank`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             val expectedPlayers = listOf(
                 RankedPlayerResponse("john", 10, 1),
@@ -283,9 +261,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should get a player`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             val expected = RankedPlayerResponse("john", 10, 1)
 
@@ -298,9 +274,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should not get an unknown player`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication {
             insertTestPlayers()
             handleRequest(HttpMethod.Get, "$baseUrl/foo").apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.NotFound)
@@ -311,9 +285,7 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
 
     @Test
     fun `should delete all players`() {
-        withTestApplication({
-            module(testing = true, listOf(testModule))
-        }) {
+        withInitializedTestApplication{
             insertTestPlayers()
             handleRequest(HttpMethod.Delete, baseUrl).apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.NoContent)
