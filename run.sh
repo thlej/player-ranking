@@ -8,3 +8,5 @@ up() {
 down() {
     docker-compose down
 }
+
+$1
