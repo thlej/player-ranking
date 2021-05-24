@@ -18,7 +18,6 @@ import org.koin.ktor.ext.Koin
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.getCollection
 import org.slf4j.event.Level
-import java.lang.IllegalArgumentException
 
 fun main(args: Array<String>): Unit =
     io.ktor.server.netty.EngineMain.main(args)
@@ -45,7 +44,6 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = emp
     }
 
     install(Koin) {
-        // slf4jLogger() FIXME crashes startup...
         modules(koinModules.ifEmpty {
             listOf(module {
                 val mongoUri = environment.config.property("ktor.mongo.uri").getString()
