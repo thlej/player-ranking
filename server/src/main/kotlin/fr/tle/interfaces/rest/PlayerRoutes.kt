@@ -4,7 +4,7 @@ import fr.tle.domain.Player
 import fr.tle.domain.PlayerService
 import fr.tle.infrastructure.exception.PlayerAlreadyExistsException
 import fr.tle.interfaces.rest.dto.PlayerCreateRequest
-import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
+import fr.tle.interfaces.rest.dto.PointsUpdateRequest
 import fr.tle.interfaces.rest.extensions.receiveBodyOrNull
 import fr.tle.interfaces.rest.mappers.toPlayer
 import fr.tle.interfaces.rest.mappers.toRankedPlayerResponse
@@ -51,14 +51,14 @@ fun Route.addPlayer() {
     }
 }
 
-fun Route.updatePlayer() {
+fun Route.updatePlayerPoints() {
     val playerService by inject<PlayerService>()
 
-    put("/{pseudo}") {
+    put("/{pseudo}/points") {
         val pseudo = call.parameters["pseudo"]
             ?: return@put call.respondText("Missing 'pseudo' parameter", status = HttpStatusCode.BadRequest)
 
-        val points = call.receiveBodyOrNull<PlayerUpdateRequest>()?.points
+        val points = call.receiveBodyOrNull<PointsUpdateRequest>()?.points
             ?: return@put call.respondText("Malformed or missing body", status = HttpStatusCode.BadRequest)
 
         val rankedPlayerResponse = playerService.update(Player(pseudo, points))?.toRankedPlayerResponse()
@@ -83,7 +83,7 @@ fun Application.registerPlayerRoutes() {
     routing {
         route("api/v1/players") {
             addPlayer()
-            updatePlayer()
+            updatePlayerPoints()
             listAllPlayers()
             getPlayer()
             deleteAllPlayers()

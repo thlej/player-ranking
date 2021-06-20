@@ -10,7 +10,7 @@ import fr.tle.infrastructure.persistence.mongo.MongoPlayerRepository
 import fr.tle.infrastructure.persistence.mongo.PlayerDocument
 import fr.tle.infrastructure.persistence.mongo.toPlayerDocument
 import fr.tle.interfaces.rest.dto.PlayerCreateRequest
-import fr.tle.interfaces.rest.dto.PlayerUpdateRequest
+import fr.tle.interfaces.rest.dto.PointsUpdateRequest
 import fr.tle.interfaces.rest.dto.RankedPlayerResponse
 import fr.tle.module
 import io.ktor.http.*
@@ -153,10 +153,10 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     fun `should update given player points`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
-                setBody(Json.encodeToString(PlayerUpdateRequest(20)))
+                setBody(Json.encodeToString(PointsUpdateRequest(20)))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                 assertThat(response.content).isEqualTo(
@@ -169,10 +169,10 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should not update player when body is empty`() {
+    fun `should not update player points when body is empty`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody("{}")
@@ -184,10 +184,10 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should not update player with null points`() {
+    fun `should not update player points with null points`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody("""{"points": null}""")
@@ -199,28 +199,28 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should not update player with negative points`() {
+    fun `should not update player points with negative points`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
                 setBody("""{"points": -10}""")
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                assertThat(response.content).isEqualTo("PlayerUpdateRequest.points must be positive")
+                assertThat(response.content).isEqualTo("PointsUpdateRequest.points must be positive")
             }
         }
     }
 
     @Test
-    fun `should not update unknown player`() {
+    fun `should not update unknown player points`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/foo") {
+            handleRequest(HttpMethod.Put, "$baseUrl/foo/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
-                setBody(Json.encodeToString(PlayerUpdateRequest(20)))
+                setBody(Json.encodeToString(PointsUpdateRequest(20)))
             }.apply {
                 assertThat(response.status()).isEqualTo(HttpStatusCode.NotFound)
                 assertThat(response.content).isEqualTo("No player found for pseudo 'foo'")
@@ -229,10 +229,10 @@ class PlayerRoutesTest(mongoDatabase: MongoDatabase) : WithAssertions {
     }
 
     @Test
-    fun `should not update when body is missing`() {
+    fun `should not update player points when body is missing`() {
         withInitializedTestApplication {
             insertTestPlayers()
-            handleRequest(HttpMethod.Put, "$baseUrl/bill") {
+            handleRequest(HttpMethod.Put, "$baseUrl/bill/points") {
                 addHeader("Content-Type", "application/json")
                 addHeader("Accept", "application/json")
             }.apply {

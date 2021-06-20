@@ -17,8 +17,8 @@ data class PlayerResponse(val pseudo: String, val points: Int)
 data class RankedPlayerResponse(val pseudo: String, val points: Int, val rank: Int)
 
 @Serializable
-data class PlayerUpdateRequest(val points: Int){
+data class PointsUpdateRequest(val points: Int){
     init {
-        require(points >= 0) { "PlayerUpdateRequest.points must be positive" }
+        require(points >= 0) { "PointsUpdateRequest.points must be positive" }
     }
 }

@@ -30,17 +30,17 @@ class PlayerDtosTest : WithAssertions{
     }
 
     @Nested
-    inner class PlayerUpdateRequestTest{
+    inner class PointsUpdateRequestTest{
         @Test
-        internal fun `should instantiate PlayerUpdateRequestTest`() {
-            val playerUpdateRequest = PlayerUpdateRequest(10)
-            assertThat(playerUpdateRequest.points).isEqualTo(10)
+        internal fun `should instantiate PointsUpdateRequest`() {
+            val pointsUpdateRequest = PointsUpdateRequest(10)
+            assertThat(pointsUpdateRequest.points).isEqualTo(10)
         }
 
         @Test
-        internal fun `should not instantiate PlayerUpdateRequestTest with negative points`() {
-            val message = assertThrows<IllegalArgumentException> { PlayerUpdateRequest(-10) }.message
-            assertThat(message).isEqualTo("PlayerUpdateRequest.points must be positive")
+        internal fun `should not instantiate PointsUpdateRequest with negative points`() {
+            val message = assertThrows<IllegalArgumentException> { PointsUpdateRequest(-10) }.message
+            assertThat(message).isEqualTo("PointsUpdateRequest.points must be positive")
         }
     }
 }

@@ -25,6 +25,14 @@ Content-Type: application/json
   "points": 10
 }
 
+### Update john's points
+PUT http://localhost:8080/api/v1/players/john/points
+Content-Type: application/json
+
+{
+  "points": 100
+}
+
 ### List all players (sorted by rank)
 GET http://localhost:8080/api/v1/players
 
