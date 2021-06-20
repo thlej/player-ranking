@@ -20,7 +20,45 @@ class MongoPlayerRepository(private val collection: MongoCollection<PlayerDocume
     }
 
     override fun by(pseudo: String): RankedPlayer? {
-        return allSortedByRank().find { it.player.pseudo == pseudo }
+        return collection.aggregate<RankedPlayerDocument>(
+            """
+            [
+                {
+                    $sort: {
+                    points: -1
+                }
+                },
+                {
+                    $group: {
+                        _id: 1,
+                        player: {
+                            $push: {
+                                pseudo: "$ pseudo",
+                                points: "$ points"
+                            }
+                        }
+                    }
+                },
+                { $unwind: { path: "$ player", includeArrayIndex: "rank" } },
+                {
+                    $project: {
+                        _id: false,
+                        player : {
+                            pseudo: "$ player.pseudo",
+                            points: "$ player.points"
+                        }
+                        rank: { $ toInt: { $ sum: ["$ rank", 1] } }
+                    }
+                },
+                {
+                    $match: {
+                        "player.pseudo": "$pseudo"
+                    }
+                }
+                
+            ]
+            """.formatJson()
+        ).singleOrNull()?.toRankedPlayer()
     }
 
     override fun allSortedByRank(): Collection<RankedPlayer> {
